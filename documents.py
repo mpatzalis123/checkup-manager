@@ -5,6 +5,7 @@
   - Συνοδευτική κατάσταση για τον ιατρό εργασίας
 """
 
+import os
 from datetime import date
 
 from reportlab.lib.pagesizes import A4
@@ -15,11 +16,52 @@ from reportlab.pdfgen import canvas
 
 import config
 
-FONT_DIR = "/usr/share/fonts/truetype/dejavu"
-pdfmetrics.registerFont(TTFont("Body", f"{FONT_DIR}/DejaVuSerif.ttf"))
-pdfmetrics.registerFont(TTFont("Body-B", f"{FONT_DIR}/DejaVuSerif-Bold.ttf"))
-pdfmetrics.registerFont(TTFont("Sans", f"{FONT_DIR}/DejaVuSans.ttf"))
-pdfmetrics.registerFont(TTFont("Sans-B", f"{FONT_DIR}/DejaVuSans-Bold.ttf"))
+# --- Γραμματοσειρές ------------------------------------------------------
+# Χρειάζονται γραμματοσειρές με ελληνικούς χαρακτήρες. Οι ενσωματωμένες του
+# reportlab δεν τους έχουν. Ψάχνουμε τις DejaVu σε συνηθισμένες διαδρομές
+# ώστε ο κώδικας να τρέχει σε Linux, macOS και σε containers.
+
+ΔΙΑΔΡΟΜΕΣ = [
+    "/usr/share/fonts/truetype/dejavu",
+    "/usr/share/fonts/dejavu",
+    "/usr/share/fonts/TTF",
+    "/usr/local/share/fonts",
+    "/Library/Fonts",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts"),
+]
+
+ΑΡΧΕΙΑ = {
+    "Body": "DejaVuSerif.ttf",
+    "Body-B": "DejaVuSerif-Bold.ttf",
+    "Sans": "DejaVuSans.ttf",
+    "Sans-B": "DejaVuSans-Bold.ttf",
+}
+
+
+def _βρες_γραμματοσειρα(αρχειο):
+    for δ in ΔΙΑΔΡΟΜΕΣ:
+        p = os.path.join(δ, αρχειο)
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def _καταχωρηση_γραμματοσειρων():
+    λειπουν = []
+    for ονομα, αρχειο in ΑΡΧΕΙΑ.items():
+        p = _βρες_γραμματοσειρα(αρχειο)
+        if p:
+            pdfmetrics.registerFont(TTFont(ονομα, p))
+        else:
+            λειπουν.append(αρχειο)
+    if λειπουν:
+        raise RuntimeError(
+            "Δεν βρέθηκαν οι γραμματοσειρές: " + ", ".join(λειπουν) +
+            ". Σε Debian/Ubuntu: apt install fonts-dejavu-core. "
+            "Εναλλακτικά, αντίγραψέ τις στον υποφάκελο fonts/.")
+
+
+_καταχωρηση_γραμματοσειρων()
 
 W, H = A4
 
