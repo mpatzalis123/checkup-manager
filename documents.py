@@ -18,10 +18,24 @@ import config
 
 # --- Γραμματοσειρές ------------------------------------------------------
 # Χρειάζονται γραμματοσειρές με ελληνικούς χαρακτήρες. Οι ενσωματωμένες του
-# reportlab δεν τους έχουν. Ψάχνουμε τις DejaVu σε συνηθισμένες διαδρομές
-# ώστε ο κώδικας να τρέχει σε Linux, macOS και σε containers.
+# reportlab δεν τους έχουν. Παίρνουμε τις DejaVu από τη matplotlib (που τις
+# συνοδεύει πάντα) και, ως εναλλακτική, από τις συνηθισμένες διαδρομές του
+# συστήματος. Έτσι η παραγωγή PDF δουλεύει και σε containers χωρίς
+# εγκατεστημένες γραμματοσειρές.
+
+def _διαδρομη_matplotlib():
+    """Η matplotlib συνοδεύεται από τις DejaVu - τις δανειζόμαστε από εκεί."""
+    try:
+        import matplotlib
+        return os.path.join(os.path.dirname(matplotlib.__file__),
+                            "mpl-data", "fonts", "ttf")
+    except Exception:
+        return None
+
 
 ΔΙΑΔΡΟΜΕΣ = [
+    δ for δ in (_διαδρομη_matplotlib(),) if δ
+] + [
     "/usr/share/fonts/truetype/dejavu",
     "/usr/share/fonts/dejavu",
     "/usr/share/fonts/TTF",
@@ -57,8 +71,8 @@ def _καταχωρηση_γραμματοσειρων():
     if λειπουν:
         raise RuntimeError(
             "Δεν βρέθηκαν οι γραμματοσειρές: " + ", ".join(λειπουν) +
-            ". Σε Debian/Ubuntu: apt install fonts-dejavu-core. "
-            "Εναλλακτικά, αντίγραψέ τις στον υποφάκελο fonts/.")
+            ". Εγκατάστησε τη matplotlib (pip install matplotlib) ή "
+            "αντίγραψε τα αρχεία DejaVu στον υποφάκελο fonts/.")
 
 
 _καταχωρηση_γραμματοσειρων()
