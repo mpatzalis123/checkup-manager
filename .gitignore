@@ -1,0 +1,6 @@
+config_local.py
+signature.png
+*.xlsx
+!demo_data.xlsx
+__pycache__/
+*.pyc
